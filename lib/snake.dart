@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'dart:core';
 import 'dart:math';
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 // ----------------------------------------------------------------------------
@@ -14,9 +15,14 @@ class Vector2i
   int x = 0;
   int y = 0;
 
+  // @point Named constructor
+  // @point Initialization lists
   Vector2i.origin(): x = 0, y = 0 { }
+
+  // @point In-place constructor
   Vector2i(this.x, this.y);
 
+  // @point Fat arrow notation
   Vector2i operator +(Vector2i vec) => Vector2i(x + vec.x, y + vec.y);
   Vector2i operator -(Vector2i vec) => Vector2i(x - vec.x, y - vec.y);
   bool operator ==(Object vec) => vec is Vector2i && vec.x == x && vec.y == y;
@@ -45,7 +51,7 @@ class Vector2d
   }  
 }
 
-
+// @point Enumerations
 enum Direction
 {
   Left,
@@ -82,6 +88,7 @@ Vector2d getScreenSize()
 // Abstractions
 // ----------------------------------------------------------------------------
 
+// @point "Interface" declaration
 abstract class Renderable
 {
   Vector2i position = Vector2i.origin();
@@ -93,37 +100,69 @@ abstract class Playable
   void processTapInput(Vector2d pos);
 }
 
-
 // ----------------------------------------------------------------------------
 // Main code
 // ----------------------------------------------------------------------------
 
+enum PowerupType
+{
+  Apple,
+  Orange,
+  Berry,
+  
+  COUNT
+}
+
+class _PowerupProperties
+{
+  int bonusSize;  
+  Color color;
+
+  _PowerupProperties(this.bonusSize, this.color);
+}
+
 class Powerup implements Renderable
 {
-  Vector2i position;  
-  Color color;
-  int bonusSize;
-  
-  Powerup(this.color, this.bonusSize, this.position);
-  
-  factory Powerup.createInstance(String powerupName, Vector2i position)
-  {
-    if(powerupName.toLowerCase() == "apple")
-    {
-      return Powerup(Colors.red, 1, position);
-    }
-    else if(powerupName.toLowerCase() == "orange")
-    {
-      return Powerup(Colors.orange, 2, position);
-    }
 
-    assert(false, "Unknown name was given!");
-    return Powerup(Colors.black, 0, Vector2i.origin());
+  // @point Dictionary, private fields
+  static final _propertiesTable =
+  {
+    PowerupType.Apple: _PowerupProperties(1, Colors.red),
+    PowerupType.Orange: _PowerupProperties(3, Colors.orange),
+    PowerupType.Berry: _PowerupProperties(5, Colors.blue),
+  };
+  
+  _PowerupProperties _properties;
+  Vector2i position;  
+  
+  Powerup(this._properties, this.position);
+
+  // @point Factory constructor
+  factory Powerup.createInstance(PowerupType type, Vector2i position)
+  {
+    switch(type)
+    {
+      // @point Forcing to non-nullable type
+      case PowerupType.Apple: return Powerup(_propertiesTable[type]!, position); break;
+      case PowerupType.Orange: return Powerup(_propertiesTable[type]!, position); break;
+      case PowerupType.Berry: return Powerup(_propertiesTable[type]!, position); break;
+
+      // @point Assertions
+      case PowerupType.COUNT: assert(false, "COUNT is not a real powerup type!"); break;
+    }
+    
+    return Powerup(_propertiesTable[PowerupType.Apple]!, Vector2i.origin());
   }
   
   Color getRepresentation()
   {
-    return color;
+    return _properties.color;
+  }
+
+  // @point Fancy getter/setter syntax
+  int get bonusSize
+  {
+    return _properties.bonusSize;
   }
 }
 
@@ -142,6 +181,7 @@ class SnakePart implements Renderable
 
 class Snake implements Playable
 {
+  // @point Lists
   List<SnakePart> parts = [];
   Direction currentDirection = Direction.Right;
   Direction nextDirection = Direction.Right;
@@ -155,7 +195,7 @@ class Snake implements Playable
 
   void placeHeadOnMap(GameMap gameMap)
   {
-    gameMap.setRenderable(getHead(), getHead().position);
+    gameMap.setRenderable(head, head.position);
   }
   
   void processTapInput(Vector2d pos)
@@ -207,7 +247,7 @@ class Snake implements Playable
 
   void passPowerup(Powerup powerup)
   {
-    Vector2i tailPosition = getTail().position;
+    Vector2i tailPosition = tail.position;
     
     for(var i = 0; i < powerup.bonusSize; i++)
     {
@@ -215,19 +255,19 @@ class Snake implements Playable
     }
   }
 
-  SnakePart getHead()
+  SnakePart get head
   {
     return parts.first;
   }
 
-  SnakePart getTail()
+  SnakePart get tail
   {
     return parts.last;
   }
 
   Vector2i getHeadNextPosition(GameMap gameMap)
   {
-    return gameMap.wrapPosition(getHead().position + directionToVector(nextDirection));    
+    return gameMap.wrapPosition(head.position + directionToVector(nextDirection));    
   }
 
   bool positionIsOccupied(Vector2i position)
@@ -238,6 +278,7 @@ class Snake implements Playable
 
 class GameMap
 {
+  // @point Static variables
   static const double tableWidth            = 500;
   static const double tableHeight           = 500;
   static const double minPowerupSpawnTimeMs = 2000;
@@ -251,6 +292,8 @@ class GameMap
   Random RNG                                = Random();  
   Snake snake                               = Snake();
   List<Powerup> powerups                    = <Powerup>[];
+
+  // @point Nullable type
   List<List<Renderable?>> renderables       = <List<Renderable?>>[];
 
   GameMap(int size)
@@ -397,7 +440,7 @@ class GameMap
       if(powerups.length < maxPowerupsCount && RNG.nextDouble() <= powerupSpawnChance)
       {
         final mapSize = renderables.length;
-        Vector2i newPowerupPosition = snake.getHead().position.copy();
+        Vector2i newPowerupPosition = snake.head.position.copy();
         
         while(getRenderable(newPowerupPosition) != null)
         {
@@ -405,8 +448,11 @@ class GameMap
           newPowerupPosition.y = RNG.nextInt(mapSize - 1);
         }
 
-        // TODO: Choose
-        Powerup newPowerup = Powerup.createInstance("apple", newPowerupPosition);
+        Powerup newPowerup = Powerup.createInstance(
+          PowerupType.values[RNG.nextInt(PowerupType.COUNT.index)],
+          newPowerupPosition,
+        );
+        
         setRenderable(newPowerup, newPowerupPosition);
         powerups.add(newPowerup);
         
@@ -429,12 +475,15 @@ class _SnakeGameState extends State<SnakeGame>
 
   _SnakeGameState()
   {
+    // @point Passing function
     new Timer.periodic(Duration(milliseconds: frameTimeMs), handleTimerTimeout);
   }
   
   void handleTimerTimeout(Timer timer)
   {
     gameMap.update(frameTimeMs as double);
+
+    // @point Passing lambda function
     setState((){});
   }
 
