@@ -341,7 +341,7 @@ class GameMap
   {
     if(gameOver)
     {
-      return Center(child: Text("Game over!"));
+      return Center(child: Text("Game over! Author: Mykyta Tereshchenko TI-82"));
     }
     else
     {
