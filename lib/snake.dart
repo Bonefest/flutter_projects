@@ -1,3 +1,5 @@
+import 'dart:ui';
+import 'dart:core';
 import 'dart:math';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -6,12 +8,13 @@ import 'package:flutter/material.dart';
 // Helper interface
 // ----------------------------------------------------------------------------
 
+// @consider Neither generics nor mixins are able to abstract to Vector2 class
 class Vector2i
 {
   int x = 0;
   int y = 0;
 
-  Vector2i.origin(): x = 0, y = 0 {}
+  Vector2i.origin(): x = 0, y = 0 { }
   Vector2i(this.x, this.y);
 
   Vector2i operator +(Vector2i vec) => Vector2i(x + vec.x, y + vec.y);
@@ -21,8 +24,27 @@ class Vector2i
   Vector2i copy()
   {
     return Vector2i(x, y);
-  }
+  }  
 }
+
+class Vector2d
+{
+  double x = 0;
+  double y = 0;
+
+  Vector2d.origin(): x = 0, y = 0 { }
+  Vector2d(this.x, this.y);
+
+  Vector2d operator +(Vector2d vec) => Vector2d(x + vec.x, y + vec.y);
+  Vector2d operator -(Vector2d vec) => Vector2d(x - vec.x, y - vec.y);
+  bool operator ==(Object vec) => vec is Vector2d && vec.x == x && vec.y == y;
+
+  Vector2d copy()
+  {
+    return Vector2d(x, y);
+  }  
+}
+
 
 enum Direction
 {
@@ -30,6 +52,11 @@ enum Direction
   Top,
   Right,
   Bottom
+}
+
+bool areOppositeDirections(Direction directionA, Direction directionB)
+{
+  return (directionA.index - directionB.index).abs() % 2 == 0;
 }
 
 Vector2i directionToVector(Direction direction)
@@ -41,6 +68,14 @@ Vector2i directionToVector(Direction direction)
     case Direction.Right: return Vector2i(1, 0); break;
     case Direction.Bottom: return Vector2i(0, 1); break;        
   }
+}
+
+Vector2d getScreenSize()
+{
+  return Vector2d(
+    window.physicalSize.width / window.devicePixelRatio,
+    window.physicalSize.height / window.devicePixelRatio,
+  );
 }
 
 // ----------------------------------------------------------------------------
@@ -55,7 +90,7 @@ abstract class Renderable
 
 abstract class Playable
 {
-  void processTapInput(TapDownDetails details);
+  void processTapInput(Vector2d pos);
 }
 
 
@@ -120,12 +155,37 @@ class Snake implements Playable
 
   void placeHeadOnMap(GameMap gameMap)
   {
-    gameMap.renderables[parts[0].position.y][parts[0].position.x] = parts[0];
+    gameMap.setRenderable(getHead(), getHead().position);
   }
   
-  void processTapInput(TapDownDetails details)
+  void processTapInput(Vector2d pos)
   {
-    // TODO: determine nextDirection
+    print('${pos.x}, ${pos.y}');
+    
+    Vector2d vecToCenter = Vector2d(
+      0.5 - pos.x,
+      0.5 - pos.y,
+    );
+
+    Vector2d absVecToCenter = Vector2d(
+      vecToCenter.x.abs(),
+      vecToCenter.y.abs(),
+    );
+
+    Direction potentialDirection = nextDirection;
+    if(absVecToCenter.x > absVecToCenter.y)
+    {
+      potentialDirection = vecToCenter.x >= 0 ? Direction.Left : Direction.Right;
+    }
+    else
+    {
+      potentialDirection = vecToCenter.y >= 0 ? Direction.Top : Direction.Bottom;
+    }
+
+    if(!areOppositeDirections(currentDirection, potentialDirection))
+    {
+      nextDirection = potentialDirection;
+    }
   }
   
   void move(GameMap gameMap)
@@ -135,8 +195,8 @@ class Snake implements Playable
     {
       Vector2i prevPosition = part.position;
 
-      gameMap.renderables[newPosition.y][newPosition.x] = gameMap.renderables[prevPosition.y][prevPosition.x];
-      gameMap.renderables[prevPosition.y][prevPosition.x] = newPosition == prevPosition ? part : null;
+      gameMap.setRenderable(gameMap.getRenderable(prevPosition), newPosition); 
+      gameMap.setRenderable(newPosition == prevPosition ? part : null, prevPosition);
       
       part.position = newPosition;
       newPosition = prevPosition;
@@ -178,20 +238,20 @@ class Snake implements Playable
 
 class GameMap
 {
-  static const double tableWidth = 500;
-  static const double tableHeight = 500;
+  static const double tableWidth            = 500;
+  static const double tableHeight           = 500;
   static const double minPowerupSpawnTimeMs = 2000;
-  static const double powerupSpawnChance = 0.5;
-  static const int maxPowerupsCount = 3;
+  static const double powerupSpawnChance    = 0.5;
+  static const int    maxPowerupsCount      = 3;
 
-  bool gameOver = false;
-  double elapsedTimeSinceStartMs = 0;
-  double elapsedTimeSincePowerupSpawnMs = 0;
-  Random RNG = Random();
-  
-  Snake snake = Snake();
-  List<Powerup> powerups = <Powerup>[];
-  List<List<Renderable?>> renderables = <List<Renderable?>>[];
+  bool gameOver                             = false;
+  double elapsedTimeSinceStartMs            = 0;
+  double elapsedTimeSincePowerupSpawnMs     = 0;
+
+  Random RNG                                = Random();  
+  Snake snake                               = Snake();
+  List<Powerup> powerups                    = <Powerup>[];
+  List<List<Renderable?>> renderables       = <List<Renderable?>>[];
 
   GameMap(int size)
   {
@@ -204,9 +264,20 @@ class GameMap
     snake.placeHeadOnMap(this);
   }
   
-  void processTapInput(BuildContext context, TapDownDetails details)
+  void processTapInput(TapDownDetails details)
   {
+    final screenSize = getScreenSize();
+    final globalTapPosition = details.globalPosition;
+    final localTapPosition = Vector2d(
+      globalTapPosition.dx - screenSize.x * 0.5 + tableWidth * 0.5,
+      globalTapPosition.dy - screenSize.y * 0.5 + tableHeight * 0.5,
+    );
     
+    snake.processTapInput(Vector2d(
+        localTapPosition.x / (tableWidth as double),
+        localTapPosition.y / (tableHeight as double),
+      ),
+    );
   }
   
   void update(double delta)
@@ -232,8 +303,8 @@ class GameMap
     else
     {
       final mapSize = renderables.length;
-      var cellWidth = tableWidth / mapSize;
-      var cellHeight = tableHeight / mapSize;
+      final cellWidth = tableWidth / mapSize;
+      final cellHeight = tableHeight / mapSize;
       
       var tableRows = <TableRow>[];
       for(var row in renderables)
@@ -281,6 +352,22 @@ class GameMap
     );
   }
 
+  Renderable? getRenderable(Vector2i position)
+  {
+    assert(position.x >= 0 && position.x < renderables.length &&
+      position.y >= 0 && position.y < renderables.length);
+    
+    return renderables[position.y][position.x];
+  }
+
+  void setRenderable(Renderable? renderable, Vector2i position)
+  {
+    assert(position.x >= 0 && position.x < renderables.length &&
+      position.y >= 0 && position.y < renderables.length);
+    
+    renderables[position.y][position.x] = renderable;
+  }
+  
   void _processCollisions()
   {
     Vector2i headNextPosition = snake.getHeadNextPosition(this);    
@@ -312,7 +399,7 @@ class GameMap
         final mapSize = renderables.length;
         Vector2i newPowerupPosition = snake.getHead().position.copy();
         
-        while(renderables[newPowerupPosition.y][newPowerupPosition.x] != null)
+        while(getRenderable(newPowerupPosition) != null)
         {
           newPowerupPosition.x = RNG.nextInt(mapSize - 1);
           newPowerupPosition.y = RNG.nextInt(mapSize - 1);
@@ -320,7 +407,7 @@ class GameMap
 
         // TODO: Choose
         Powerup newPowerup = Powerup.createInstance("apple", newPowerupPosition);
-        renderables[newPowerupPosition.y][newPowerupPosition.x] = newPowerup;
+        setRenderable(newPowerup, newPowerupPosition);
         powerups.add(newPowerup);
         
         elapsedTimeSincePowerupSpawnMs = 0;
@@ -337,8 +424,8 @@ class SnakeGame extends StatefulWidget
 
 class _SnakeGameState extends State<SnakeGame>
 {
-  static const int frameTimeMs = 500;
-  GameMap gameMap = GameMap(7);
+  static const int frameTimeMs = 100;
+  GameMap gameMap = GameMap(15);
 
   _SnakeGameState()
   {
@@ -350,10 +437,20 @@ class _SnakeGameState extends State<SnakeGame>
     gameMap.update(frameTimeMs as double);
     setState((){});
   }
+
+  void handleTapDown(TapDownDetails details)
+  {
+    gameMap.processTapInput(details);
+  }
   
   @override
   Widget build(BuildContext context)
   {
-    return gameMap.render();
+    return new GestureDetector(
+      onTapDown: handleTapDown,
+      child: Container(
+        child: gameMap.render(),
+      ),
+    );
   }
 }
