@@ -245,8 +245,6 @@ Widget generateVideoPreview(String title, String author)
 
 Widget generateHistoryTab()
 {
-
-  
   return Container(
     child: Column(
       children: [
@@ -349,6 +347,135 @@ Widget generateActionsTab()
   );
 }
 
+Widget generatePlaylist(String title,
+  [bool createNew = false, String? author, int? videoCount, double padding = 22.0])
+{
+  Widget previewWidget;
+  if(createNew)
+  {
+    previewWidget = Icon(
+      Icons.add,
+      color: Colors.blue,
+    );
+  }
+  else
+  {
+    previewWidget = Image(
+      image: AssetImage('assets/preview.png'),
+      fit: BoxFit.fill,
+    );
+  }
+
+  Widget textWidget;
+  if(createNew)
+  {
+    textWidget = Text(
+      title,
+      style: TextStyle(
+        color: Colors.blue,
+        fontSize: 16
+      ),
+    );
+  }
+  else
+  {
+    var textChildren = [
+      Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+            ),
+          ),
+        ],
+      )
+    ];
+
+    if(author != null)
+    {
+      assert(videoCount != null);
+      
+      textChildren.add(
+        Row(
+          children: [
+            Text(
+              '$author • $videoCount відео',
+              style: TextStyle(
+                color: Color(0xFF757575),
+              ),
+            )
+          ],
+        )
+      );
+    }
+
+    textWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: textChildren,
+    );
+  }
+  
+  return Container(
+    padding: EdgeInsets.only(top: createNew ? 0.0 : padding),
+    child: Row(
+      children: [
+        Container(
+          padding: EdgeInsets.only(right: 22.0),
+          child: SizedBox(
+            width: 55,
+            height: 55,
+            child: previewWidget,
+          ),
+        ),
+        textWidget,
+      ],
+    ),
+  );
+}
+
+Widget generatePlaylistsTab()
+{
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.center,          
+        children: [
+          Text(
+            "Списки відтворення",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w400
+            ),
+          ),
+          Spacer(),
+          Text(
+            "А-Я",
+            style: TextStyle(fontSize: 16),            
+          ),
+          Icon(
+            Icons.expand_more,
+          )
+        ],
+      ),
+
+      Expanded(
+        child: ListView(
+          shrinkWrap: true,
+          children: [
+            generatePlaylist('Новий список відтворення', true),
+            generatePlaylist('3D Game Engine Development Tutorial', false, 'thebennybox', 61, 10.0),
+            generatePlaylist('ACM/ICPC Training: For Beginner', false, 'Amy Knuth', 23),
+            generatePlaylist('AngularJS tutorial for beginners', false, 'kudvenkat', 53),            
+            generatePlaylist('Beatles', false, '', 23),                        
+          ]
+        ),
+      ),
+    ],
+  );
+}
+
 Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
 {
   return Container(
@@ -367,9 +494,7 @@ Widget generateYoutubeBody()
 {
   const leftPadding = 22.0;
   
-  return Container(
-    // padding: EdgeInsets.only(left: 22.0, top: 24.0),
-    color: Colors.white,
+  return Expanded(
     child: Column(
       children: [
         Container(
@@ -380,8 +505,17 @@ Widget generateYoutubeBody()
         generateDivider(EdgeInsets.only(top: 22.0)),
 
         Container(
-          padding: EdgeInsets.only(left: leftPadding, top: 30.0),
+          padding: EdgeInsets.only(left: leftPadding, top: 20.0),
           child: generateActionsTab(),
+        ),
+
+        generateDivider(),
+
+        Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(left: leftPadding, top: 15.0, right: leftPadding),
+            child: generatePlaylistsTab(),
+          )
         ),
       ],
     )
@@ -397,7 +531,10 @@ class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
     return Scaffold(
       appBar: generateYoutubeAppBar(),
       body: Center(
-        child: generateYoutubeBody(),
+        child: ColoredBox(
+          color: Colors.white,
+          child: generateYoutubeBody(),
+        ),
       ),
       bottomNavigationBar: BottomAppBar(
         child: generateYoutubeBottomBar(),
