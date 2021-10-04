@@ -150,6 +150,126 @@ Widget generateYoutubeBottomBar()
   );
 }
 
+Widget generateVideoPreview()
+{
+  return Container(
+    padding: EdgeInsets.only(right: 22),
+    width: 202,
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      children: [
+        Container(
+          alignment: Alignment.center,
+          height: 113,
+          child: Stack(
+            children: [
+              Image(
+                image: AssetImage('assets/preview.png'),
+                fit: BoxFit.contain,
+              ),
+
+              // Video length box
+              Align(
+                alignment: Alignment(0.85, 0.5),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(1),
+                    color: Colors.black.withOpacity(0.8),
+                  ),
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.0),
+                    child: Text('46:55', style: TextStyle(color: Color(0xFFF8F3F0))),
+                  ),
+                ),
+              ),
+
+              // Bottom red line
+              Align(
+                alignment: Alignment(-1.0, 0.78),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Color(0xFFF80302),
+                  ),
+                  height: 5,
+                  width: double.infinity, // @point
+                ),
+              ),
+
+            ]
+          ),
+          
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,                            
+                children:[
+                  Text("Long long long long long long long long long", overflow: TextOverflow.ellipsis, maxLines: 2),
+                  Text("Author author author author auhtor", overflow: TextOverflow.ellipsis, maxLines: 1),
+                ]
+              ),
+            ),
+            IconButton(
+              iconSize: 10.0,
+              padding: EdgeInsets.all(0.0),
+              constraints: BoxConstraints(),
+              color: Colors.black,
+              icon: Icon(Icons.more_vert, size: 20.0),
+              onPressed: (){}
+            ),
+          ],
+        ),
+      ],
+    )
+  );
+}
+
+Widget generateHistoryTab()
+{
+  return Column(
+    children: [
+      Row(children:[
+          Text("Останні"),
+      ]),
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children:[
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),
+            generateVideoPreview(),                        
+          ]
+        ),
+      ),
+    ]
+  );
+}  
+
+Widget generateYoutubeBody()
+{
+  return Container(
+    padding: EdgeInsets.only(left: 22.0, top: 24.0),
+    color: Colors.white,
+    child: Column(
+      children: [
+        generateHistoryTab()
+      ],
+    )
+  );
+}
+
 class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
 {
 
@@ -159,7 +279,7 @@ class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
     return Scaffold(
       appBar: generateYoutubeAppBar(),
       body: Center(
-        child: Text('Body'),
+        child: generateYoutubeBody(),
       ),
       bottomNavigationBar: BottomAppBar(
         child: generateYoutubeBottomBar(),
