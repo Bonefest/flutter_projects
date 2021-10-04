@@ -143,14 +143,14 @@ Widget generateYoutubeBottomBar()
     decoration: BoxDecoration(
       border: Border(
         bottom: BorderSide(
-          color: Color(0xFFE8E8E8),
+          color: Color(0xFFE1E1E1),
         ),
       ),
     ),
   );
 }
 
-Widget generateVideoPreview()
+Widget generateVideoPreview(String title, String author)
 {
   return Container(
     padding: EdgeInsets.only(right: 22),
@@ -178,7 +178,7 @@ Widget generateVideoPreview()
                   ),
                   child: Container(
                     margin: EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.0),
-                    child: Text('46:55', style: TextStyle(color: Color(0xFFF8F3F0))),
+                    child: Text('46:55', style: TextStyle(color: Color(0xFFD5EAEB))),
                   ),
                 ),
               ),
@@ -207,8 +207,24 @@ Widget generateVideoPreview()
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,                            
                 children:[
-                  Text("Long long long long long long long long long", overflow: TextOverflow.ellipsis, maxLines: 2),
-                  Text("Author author author author auhtor", overflow: TextOverflow.ellipsis, maxLines: 1),
+                  Text(
+                    title,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
+                    style: TextStyle(
+                      fontSize: 17.5,
+                      fontWeight: FontWeight.w400
+                    ),
+                  ),
+                  Text(
+                    author,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: Color(0xFF757575)
+                    )
+                  ),
                 ]
               ),
             ),
@@ -229,42 +245,83 @@ Widget generateVideoPreview()
 
 Widget generateHistoryTab()
 {
-  return Column(
-    children: [
-      Row(children:[
-          Text("Останні"),
-      ]),
-      SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children:[
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),
-            generateVideoPreview(),                        
-          ]
+  return Container(
+    child: Column(
+      children: [
+        Row(children:[
+            Container(
+              padding: EdgeInsets.only(bottom: 15),
+              child: Text(
+                "Останні",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                )
+              ),
+            ),
+        ]),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children:[
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),
+              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
+                "Сергій Титенко | Web-development"),            
+            ]
+          ),
         ),
-      ),
-    ]
+      ],
+    ),
+
   );
 }  
+
+
+Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
+{
+  return Container(
+    padding: padding,
+    decoration: BoxDecoration(
+      border: Border(
+        bottom: BorderSide(
+          color: Color(0xFFE1E1E1),
+        ),
+      ),
+    ),    
+  );
+}
 
 Widget generateYoutubeBody()
 {
   return Container(
-    padding: EdgeInsets.only(left: 22.0, top: 24.0),
+    // padding: EdgeInsets.only(left: 22.0, top: 24.0),
     color: Colors.white,
     child: Column(
       children: [
-        generateHistoryTab()
+        Container(
+          padding: EdgeInsets.only(left: 22.0, top: 24.0),
+          child: generateHistoryTab()
+        ),
+        generateDivider(EdgeInsets.only(top: 22.0)),
       ],
     )
   );
