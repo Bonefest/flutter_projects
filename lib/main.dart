@@ -245,6 +245,8 @@ Widget generateVideoPreview(String title, String author)
 
 Widget generateHistoryTab()
 {
+
+  
   return Container(
     child: Column(
       children: [
@@ -295,6 +297,57 @@ Widget generateHistoryTab()
   );
 }  
 
+Widget generateAction(Icon icon, String title, [String? subtitle])
+{
+  var textChildren = [
+    Text(
+      title,
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+    ),
+  ];
+
+  if(subtitle != null) {
+    textChildren.add(Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: 14,
+          color: Color(0xFF6F6F6F),
+        ),
+    ));
+  }
+  
+  return Container(
+    padding: EdgeInsets.only(bottom: 35),
+    child: Row(
+      children: [
+        icon,
+        Container(
+          padding: EdgeInsets.only(left: 30.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: textChildren,
+          )
+        ),
+      ]
+    ),
+  );
+}
+
+Widget generateActionsTab()
+{
+  return Column(
+    children: [
+      generateAction(Icon(Icons.history, size: 28.0), "Історія"),
+      generateAction(Icon(Icons.slideshow_sharp, size: 28.0), "Ваші відео"),
+      generateAction(Icon(Icons.theaters, size: 28.0), "Ваші фільми"),
+      generateAction(Icon(Icons.watch_later_outlined, size: 28.0), "Переглянути пізніше", "287 непереглянутих відео"),
+    ],
+  );
+}
 
 Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
 {
@@ -312,16 +365,24 @@ Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
 
 Widget generateYoutubeBody()
 {
+  const leftPadding = 22.0;
+  
   return Container(
     // padding: EdgeInsets.only(left: 22.0, top: 24.0),
     color: Colors.white,
     child: Column(
       children: [
         Container(
-          padding: EdgeInsets.only(left: 22.0, top: 24.0),
-          child: generateHistoryTab()
+          padding: EdgeInsets.only(left: leftPadding, top: 24.0),
+          child: generateHistoryTab(),
         ),
+        
         generateDivider(EdgeInsets.only(top: 22.0)),
+
+        Container(
+          padding: EdgeInsets.only(left: leftPadding, top: 30.0),
+          child: generateActionsTab(),
+        ),
       ],
     )
   );
