@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() => runApp(MyApp());
 
@@ -44,13 +45,14 @@ Container generateUserLogo(String userName, Color backgroundColor, [double size 
 AppBar generateYoutubeAppBar([double spaceBetweenIcons = 30.0])
 {
   return AppBar(
+    iconTheme: IconThemeData(color: Colors.black),
     flexibleSpace: Container(
       padding: EdgeInsets.symmetric(horizontal: 22),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,        
         children:[
           Container(
-            padding: EdgeInsets.symmetric(vertical: 18),
+            padding: EdgeInsets.symmetric(horizontal: 32, vertical: 18),
             child: Image(
               image: AssetImage('assets/youtube_logo.png'),
               filterQuality: FilterQuality.medium,
@@ -85,11 +87,13 @@ AppBar generateYoutubeAppBar([double spaceBetweenIcons = 30.0])
   );
 }
 
-Widget generateYoutubeBottomBar()
+Widget generateYoutubeBottomBar(int index, Function(int) onTap)
 {
   return Container(
     margin: EdgeInsets.only(bottom: 10.0),
     child: BottomNavigationBar(
+      currentIndex: index,
+      onTap: onTap,
       type: BottomNavigationBarType.fixed,
       items:[
         BottomNavigationBarItem(
@@ -98,7 +102,7 @@ Widget generateYoutubeBottomBar()
             color: Colors.black,
             size: 28.0,
           ),
-          title: Text('Головна'),
+          title: Text('Home'),
         ),
 
         BottomNavigationBarItem(
@@ -107,7 +111,7 @@ Widget generateYoutubeBottomBar()
             color: Colors.black,
             size: 28.0,
           ),
-          title: Text('Налаштування'),
+          title: Text('Settings'),
         ),
 
         BottomNavigationBarItem(
@@ -116,7 +120,7 @@ Widget generateYoutubeBottomBar()
             color: Colors.black,
             size: 40.0,
           ),
-          title: Text('Створити', style: TextStyle(fontSize: 0)),
+          title: Text('Create', style: TextStyle(fontSize: 0)),
         ),
         
         BottomNavigationBarItem(
@@ -125,7 +129,7 @@ Widget generateYoutubeBottomBar()
             color: Colors.black,
             size: 28.0,
           ),
-          title: Text('Підписки'),
+          title: Text('Subscriptions'),
         ),
         
         BottomNavigationBarItem(
@@ -134,7 +138,7 @@ Widget generateYoutubeBottomBar()
             color: Colors.black,
             size: 28.0,
           ),
-          title: Text('Бібліотека'),
+          title: Text('Library'),
         ),            
       ],
       backgroundColor: Color(0xFFFFFFFF),
@@ -190,7 +194,7 @@ Widget generateVideoPreview(String title, String author)
                   decoration: BoxDecoration(
                     color: Color(0xFFF80302),
                   ),
-                  height: 5,
+                  height: 6,
                   width: double.infinity, // @point
                 ),
               ),
@@ -252,7 +256,7 @@ Widget generateHistoryTab()
             Container(
               padding: EdgeInsets.only(bottom: 15),
               child: Text(
-                "Останні",
+                'Recent',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
@@ -301,7 +305,7 @@ Widget generateAction(Icon icon, String title, [String? subtitle])
     Text(
       title,
       style: TextStyle(
-        fontSize: 16,
+        fontSize: 17,
         fontWeight: FontWeight.w500,
       ),
     ),
@@ -339,10 +343,10 @@ Widget generateActionsTab()
 {
   return Column(
     children: [
-      generateAction(Icon(Icons.history, size: 28.0), "Історія"),
-      generateAction(Icon(Icons.slideshow_sharp, size: 28.0), "Ваші відео"),
-      generateAction(Icon(Icons.theaters, size: 28.0), "Ваші фільми"),
-      generateAction(Icon(Icons.watch_later_outlined, size: 28.0), "Переглянути пізніше", "287 непереглянутих відео"),
+      generateAction(Icon(Icons.history, size: 28.0), 'History'),
+      generateAction(Icon(Icons.slideshow_sharp, size: 28.0), 'Your videos'),
+      generateAction(Icon(Icons.theaters, size: 28.0), 'Your movies'),
+      generateAction(Icon(Icons.watch_later_outlined, size: 28.0), 'Watch later', '286 unwatched videos'),
     ],
   );
 }
@@ -355,7 +359,7 @@ Widget generatePlaylist(String title,
   {
     previewWidget = Icon(
       Icons.add,
-      color: Colors.blue,
+      color: Color(0xFF3E6E98),
     );
   }
   else
@@ -372,8 +376,8 @@ Widget generatePlaylist(String title,
     textWidget = Text(
       title,
       style: TextStyle(
-        color: Colors.blue,
-        fontSize: 16
+        color: Color(0xFF3E6E98),        
+        fontSize: 18
       ),
     );
   }
@@ -385,7 +389,7 @@ Widget generatePlaylist(String title,
           Text(
             title,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 18,
             ),
           ),
         ],
@@ -400,9 +404,10 @@ Widget generatePlaylist(String title,
         Row(
           children: [
             Text(
-              '$author • $videoCount відео',
+              author != '' ? '$author • $videoCount videos' : '$videoCount videos',
               style: TextStyle(
                 color: Color(0xFF757575),
+                fontSize: 16,
               ),
             )
           ],
@@ -443,7 +448,7 @@ Widget generatePlaylistsTab()
         crossAxisAlignment: CrossAxisAlignment.center,          
         children: [
           Text(
-            "Списки відтворення",
+            'Playlists',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w400
@@ -451,7 +456,7 @@ Widget generatePlaylistsTab()
           ),
           Spacer(),
           Text(
-            "А-Я",
+            'A-Z',
             style: TextStyle(fontSize: 16),            
           ),
           Icon(
@@ -464,7 +469,7 @@ Widget generatePlaylistsTab()
         child: ListView(
           shrinkWrap: true,
           children: [
-            generatePlaylist('Новий список відтворення', true),
+            generatePlaylist('New playlist', true),
             generatePlaylist('3D Game Engine Development Tutorial', false, 'thebennybox', 61, 10.0),
             generatePlaylist('ACM/ICPC Training: For Beginner', false, 'Amy Knuth', 23),
             generatePlaylist('AngularJS tutorial for beginners', false, 'kudvenkat', 53),            
@@ -522,24 +527,142 @@ Widget generateYoutubeBody()
   );
 }
 
+Drawer generateYoutubeDrawer(Function() closeCallback)
+{
+  return Drawer(
+    child: ListView(
+      children: [
+        ListTile(
+          title: Text(
+            'Drawer',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w500
+            ),
+          ),
+          trailing: IconButton(
+            icon : Icon(Icons.close),
+            onPressed: closeCallback,
+          ),
+        ),
+        
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.home_outlined),
+            title: Text('Home'),
+          ),
+        ),
+
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.settings_outlined),
+            title: Text('Settings'),
+          ),
+        ),
+
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.subscriptions_outlined),
+            title: Text('Subscriptions'),
+          ),
+        ),
+
+        Card(
+          child: ListTile(
+            leading: Icon(Icons.video_library),
+            title: Text('Library'),
+          ),
+        ),
+
+      ],
+    ),
+  );
+}
+
 class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
 {
 
+  int _pageIdx = 0;
+  PageController? _pageController;
+
+  @override
+  void initState()
+  {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose()
+  {
+    _pageController?.dispose();
+    super.dispose();
+  }
+
+  @override
+  void onPageTap(int index)
+  {
+    setState((){
+        _pageIdx = index;
+        _pageController?.animateToPage(
+          index,
+          duration: Duration(milliseconds: 2500),
+          curve: Curves.linear,
+        );
+    });
+  }
+  
   @override
   Widget build(BuildContext context)
   {
     return Scaffold(
       appBar: generateYoutubeAppBar(),
+      drawer: generateYoutubeDrawer((){Navigator.pop(context);}),
       body: Center(
-        child: ColoredBox(
-          color: Colors.white,
-          child: generateYoutubeBody(),
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() => _pageIdx = index);
+          },
+          children: [
+            ColoredBox(
+              color: Colors.white,
+              child: generateYoutubeBody(),
+            ),
+            ColoredBox(
+              color: Colors.white,
+              child: generateYoutubeBody(),
+            ),
+            ColoredBox(
+              color: Colors.black,
+              child: generateYoutubeBody(),
+            ),
+          ],
         ),
       ),
       bottomNavigationBar: BottomAppBar(
-        child: generateYoutubeBottomBar(),
+        child: generateYoutubeBottomBar(_pageIdx, onPageTap),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed:(){onPageTap(2);},
+        child: Text('+', style: TextStyle(color: Colors.white, fontSize: 36)),
+        backgroundColor: Colors.red,
+      ),      
     );
   }
   
+}
+
+class VideoPage extends StatelessWidget
+{
+  @override
+  Widget build(BuildContext context)
+  {
+    return Container(
+      child: Hero(
+        tag: 'video',
+        child: Text("Text"),
+      )
+    );
+  }
 }
