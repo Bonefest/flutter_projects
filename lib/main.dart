@@ -49,37 +49,43 @@ AppBar generateYoutubeAppBar([double spaceBetweenIcons = 30.0])
     flexibleSpace: Container(
       padding: EdgeInsets.symmetric(horizontal: 22),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,        
+        crossAxisAlignment: CrossAxisAlignment.center,
         children:[
           Container(
             padding: EdgeInsets.symmetric(horizontal: 32, vertical: 18),
+            //padding: EdgeInsets.only(left: 32, top: 48, bottom: 18),            
             child: Image(
-              image: AssetImage('assets/youtube_logo.png'),
+              image: AssetImage(
+                'assets/youtube_logo.png',
+              ),
+              fit: BoxFit.contain,              
               filterQuality: FilterQuality.medium,
               isAntiAlias: true,
             ),
           ),
           Spacer(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,            
-            // crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Icon(
-                Icons.notifications_none,
-                color: Colors.black,
-                size: 30.0,
-              ),
-              SizedBox(width: spaceBetweenIcons),
-              Icon(
-                Icons.search,
-                color: Colors.black,
-                size: 30.0,
-              ),
-              SizedBox(width: spaceBetweenIcons),
-              generateUserLogo('T', Color(0xFFF36F0B)),
-            ],
-          )
-        ]
+          Container(
+            // padding: EdgeInsets.only(top: 24),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,            
+              children: [
+                Icon(
+                  Icons.notifications_none,
+                  color: Colors.black,
+                  size: 30.0,
+                ),
+                SizedBox(width: spaceBetweenIcons),
+                Icon(
+                  Icons.search,
+                  color: Colors.black,
+                  size: 30.0,
+                ),
+                SizedBox(width: spaceBetweenIcons),
+                generateUserLogo('T', Color(0xFFF36F0B)),
+              ],
+            ),
+          ),
+        ],
       ),
     ),
     
@@ -154,7 +160,7 @@ Widget generateYoutubeBottomBar(int index, Function(int) onTap)
   );
 }
 
-Widget generateVideoPreview(String title, String author)
+Widget generateVideoPreview(BuildContext context, String title, String author, int index)
 {
   return Container(
     padding: EdgeInsets.only(right: 22),
@@ -167,9 +173,23 @@ Widget generateVideoPreview(String title, String author)
           height: 113,
           child: Stack(
             children: [
-              Image(
-                image: AssetImage('assets/preview.png'),
-                fit: BoxFit.contain,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      transitionDuration: Duration(milliseconds: 2500),
+                      pageBuilder: (A, B, C) => VideoPage(title, author, index),
+                    ),
+                  );
+                },
+                child: Hero(
+                  child: Image(
+                    image: AssetImage('assets/preview.png'),
+                    fit: BoxFit.contain,
+                  ),
+                  tag: 'video$index',
+                ),
               ),
 
               // Video length box
@@ -247,8 +267,25 @@ Widget generateVideoPreview(String title, String author)
   );
 }
 
-Widget generateHistoryTab()
+Widget generateHistoryTab(BuildContext context, [int omitVideoIdx = -1])
 {
+  List<Widget> previews = [];
+  for(var i = 0; i < 10; i++)
+  {
+    if(omitVideoIdx > 0 && i == omitVideoIdx)
+    {
+      continue;
+    }
+    
+    previews.add(generateVideoPreview(
+        context,
+        'Material design. Scaffold widget. Flutter. Лекція 4',
+        'Сергій Титенко | Web-development',
+        i,
+      )
+    );
+  }
+  
   return Container(
     child: Column(
       children: [
@@ -267,30 +304,7 @@ Widget generateHistoryTab()
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
-            children:[
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),
-              generateVideoPreview("Material design. Scaffold widget. Flutter. Лекція 4",
-                "Сергій Титенко | Web-development"),            
-            ]
+            children: previews,
           ),
         ),
       ],
@@ -377,7 +391,7 @@ Widget generatePlaylist(String title,
       title,
       style: TextStyle(
         color: Color(0xFF3E6E98),        
-        fontSize: 18
+        fontSize: 16
       ),
     );
   }
@@ -389,7 +403,8 @@ Widget generatePlaylist(String title,
           Text(
             title,
             style: TextStyle(
-              fontSize: 18,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,              
             ),
           ),
         ],
@@ -407,7 +422,7 @@ Widget generatePlaylist(String title,
               author != '' ? '$author • $videoCount videos' : '$videoCount videos',
               style: TextStyle(
                 color: Color(0xFF757575),
-                fontSize: 16,
+                fontSize: 14,
               ),
             )
           ],
@@ -424,6 +439,7 @@ Widget generatePlaylist(String title,
   return Container(
     padding: EdgeInsets.only(top: createNew ? 0.0 : padding),
     child: Row(
+      crossAxisAlignment: createNew? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
         Container(
           padding: EdgeInsets.only(right: 22.0),
@@ -495,7 +511,7 @@ Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
   );
 }
 
-Widget generateYoutubeBody()
+Widget generateYoutubeBody(BuildContext context)
 {
   const leftPadding = 22.0;
   
@@ -504,7 +520,7 @@ Widget generateYoutubeBody()
       children: [
         Container(
           padding: EdgeInsets.only(left: leftPadding, top: 24.0),
-          child: generateHistoryTab(),
+          child: generateHistoryTab(context),
         ),
         
         generateDivider(EdgeInsets.only(top: 22.0)),
@@ -627,16 +643,24 @@ class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
           children: [
             ColoredBox(
               color: Colors.white,
-              child: generateYoutubeBody(),
+              child: generateYoutubeBody(context),
             ),
             ColoredBox(
               color: Colors.white,
-              child: generateYoutubeBody(),
+              child: generateYoutubeBody(context),
             ),
             ColoredBox(
               color: Colors.black,
-              child: generateYoutubeBody(),
+              child: generateYoutubeBody(context),
             ),
+            ColoredBox(
+              color: Colors.white,
+              child: generateYoutubeBody(context),
+            ),
+            ColoredBox(
+              color: Colors.white,
+              child: generateYoutubeBody(context),
+            ),            
           ],
         ),
       ),
@@ -653,16 +677,83 @@ class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
   
 }
 
+Widget generateVideoWidget(String title, String author, int index)
+{
+  return Container(
+    width: double.infinity,
+    padding: EdgeInsets.only(top: 22.0),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 360,
+              child: Hero(
+                tag: 'video$index',
+                child: Image(
+                  image: AssetImage('assets/preview.png'),
+                  fit: BoxFit.fitHeight,
+                ),
+              ),
+
+              decoration: BoxDecoration(
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 20.0,
+                  ),
+                ],
+              ),              
+            ),
+          ],
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,          
+          children: [
+            Text('$title'),
+          ],
+        )
+      ]
+    )
+  );
+}
+
 class VideoPage extends StatelessWidget
 {
+  String _title;
+  String _author;
+  int _index;
+  
+  VideoPage(
+    String title,
+    String author,
+    int index
+  ): _title=title, _author=author, _index=index {}
+
+  
   @override
   Widget build(BuildContext context)
   {
-    return Container(
-      child: Hero(
-        tag: 'video',
-        child: Text("Text"),
-      )
+    return Scaffold(
+      appBar: generateYoutubeAppBar(),
+      body: Center(
+        child: Expanded(
+          child: Column (
+            children: [
+              Container(
+                padding: EdgeInsets.only(left: 22.0, top: 24.0),
+                child: generateHistoryTab(context, _index),
+
+              ),
+
+              generateVideoWidget(_title, _author, _index),
+            ]
+          ),
+        ),
+      ),
     );
   }
 }
