@@ -269,48 +269,7 @@ Widget generateVideoPreview(BuildContext context, String title, String author, i
 
 Widget generateHistoryTab(BuildContext context, [int omitVideoIdx = -1])
 {
-  List<Widget> previews = [];
-  for(var i = 0; i < 10; i++)
-  {
-    if(omitVideoIdx > 0 && i == omitVideoIdx)
-    {
-      continue;
-    }
-    
-    previews.add(generateVideoPreview(
-        context,
-        'Material design. Scaffold widget. Flutter. Лекція 4',
-        'Сергій Титенко | Web-development',
-        i,
-      )
-    );
-  }
-  
-  return Container(
-    child: Column(
-      children: [
-        Row(children:[
-            Container(
-              padding: EdgeInsets.only(bottom: 15),
-              child: Text(
-                'Recent',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w400,
-                )
-              ),
-            ),
-        ]),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: previews,
-          ),
-        ),
-      ],
-    ),
-
-  );
+  return RecentTab();
 }  
 
 Widget generateAction(Icon icon, String title, [String? subtitle])
@@ -355,14 +314,7 @@ Widget generateAction(Icon icon, String title, [String? subtitle])
 
 Widget generateActionsTab()
 {
-  return Column(
-    children: [
-      generateAction(Icon(Icons.history, size: 28.0), 'History'),
-      generateAction(Icon(Icons.slideshow_sharp, size: 28.0), 'Your videos'),
-      generateAction(Icon(Icons.theaters, size: 28.0), 'Your movies'),
-      generateAction(Icon(Icons.watch_later_outlined, size: 28.0), 'Watch later', '286 unwatched videos'),
-    ],
-  );
+  return ActionsTab();
 }
 
 Widget generatePlaylist(String title,
@@ -457,44 +409,7 @@ Widget generatePlaylist(String title,
 
 Widget generatePlaylistsTab()
 {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Row(
-        crossAxisAlignment: CrossAxisAlignment.center,          
-        children: [
-          Text(
-            'Playlists',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w400
-            ),
-          ),
-          Spacer(),
-          Text(
-            'A-Z',
-            style: TextStyle(fontSize: 16),            
-          ),
-          Icon(
-            Icons.expand_more,
-          )
-        ],
-      ),
-
-      Expanded(
-        child: ListView(
-          shrinkWrap: true,
-          children: [
-            generatePlaylist('New playlist', true),
-            generatePlaylist('3D Game Engine Development Tutorial', false, 'thebennybox', 61, 10.0),
-            generatePlaylist('ACM/ICPC Training: For Beginner', false, 'Amy Knuth', 23),
-            generatePlaylist('AngularJS tutorial for beginners', false, 'kudvenkat', 53),            
-            generatePlaylist('Beatles', false, '', 23),                        
-          ]
-        ),
-      ),
-    ],
-  );
+  return PlaylistsTab();
 }
 
 Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
@@ -755,5 +670,126 @@ class VideoPage extends StatelessWidget
         ),
       ),
     );
+  }
+}
+
+abstract class Tab extends StatelessWidget
+{
+  @override
+  Widget build(BuildContext context)
+  {
+    String? title = getTitle();
+
+    List<Widget> titleContainer = title != null ? [
+      Container(
+        padding: EdgeInsets.only(bottom: 15),
+        child: Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+          )
+        ),
+      ),      
+    ] : [];
+    
+    return Expanded(
+      child: Column(
+        children: [
+          Row(children: titleContainer),
+          generateContent(context),
+        ],
+      ),
+    );    
+  }
+
+  String? getTitle();  
+  Widget generateContent(BuildContext context);
+}
+
+class RecentTab extends Tab
+{
+  @override
+  String? getTitle()
+  {
+    return "Recent";
+  }
+
+  @override
+  Widget generateContent(BuildContext context)
+  {
+    int omitVideoIdx = 0; // TODO:
+    
+    List<Widget> previews = [];
+    for(var i = 0; i < 10; i++)
+    {
+      if(omitVideoIdx > 0 && i == omitVideoIdx)
+      {
+        continue;
+      }
+
+      previews.add(generateVideoPreview(
+          context,
+          'Material design. Scaffold widget. Flutter. Лекція 4',
+          'Сергій Титенко | Web-development',
+          i,
+        )
+      );
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: previews,
+      ),
+    );
+  }
+}
+
+class ActionsTab extends Tab
+{
+  @override
+  String? getTitle()
+  {
+    return "Actions";
+  }
+
+  @override
+  Widget generateContent(BuildContext context)
+  {
+    return Column(
+      children: [
+        generateAction(Icon(Icons.history, size: 28.0), 'History'),
+        generateAction(Icon(Icons.slideshow_sharp, size: 28.0), 'Your videos'),
+        generateAction(Icon(Icons.theaters, size: 28.0), 'Your movies'),
+        generateAction(Icon(Icons.watch_later_outlined, size: 28.0), 'Watch later', '286 unwatched videos'),
+      ],
+    );    
+  }
+}
+
+class PlaylistsTab extends Tab
+{
+  @override
+  String? getTitle()
+  {
+    return "Playlists";
+  }
+
+  @override
+  Widget generateContent(BuildContext context)
+  {
+    return Expanded(
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          generatePlaylist('New playlist', true),
+          generatePlaylist('3D Game Engine Development Tutorial', false, 'thebennybox', 61, 10.0),
+          generatePlaylist('ACM/ICPC Training: For Beginner', false, 'Amy Knuth', 23),
+          generatePlaylist('AngularJS tutorial for beginners', false, 'kudvenkat', 53),            
+          generatePlaylist('Beatles', false, '', 23),                        
+        ]
+      ),
+    );   
   }
 }

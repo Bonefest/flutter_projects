@@ -1,15 +1,17 @@
-1. Container
-2. Column
-3. Row
-4. Expanded
-5. Color
-6. Size
-7. Shadow
-8. Background
-9. CrossAxisAlignment
-10. MainAxisAlignment
-11. Scaffold
-12. Drawer
-13. Floating button
-14. Bottom navigation bar
-15. Hero
+Decomposition:
+
+1. AppBar
+2. BottomBar
+2. Chapter/Part/Tab:
+   2.1 Recent tab
+       2.1.1 Video
+   2.2 History tab
+   2.3 Playlists tab
+       2.3.1 Playlist
+3. Video - Stateful widget. When pressed, changes state to something.
+4. Playlist
+
+Global knowledge:
+
+1. Selected video
+2. Watch later
