@@ -160,113 +160,6 @@ Widget generateYoutubeBottomBar(int index, Function(int) onTap)
   );
 }
 
-Widget generateVideoPreview(BuildContext context, String title, String author, int index)
-{
-  return Container(
-    padding: EdgeInsets.only(right: 22),
-    width: 202,
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      children: [
-        Container(
-          alignment: Alignment.center,
-          height: 113,
-          child: Stack(
-            children: [
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      transitionDuration: Duration(milliseconds: 2500),
-                      pageBuilder: (A, B, C) => VideoPage(title, author, index),
-                    ),
-                  );
-                },
-                child: Hero(
-                  child: Image(
-                    image: AssetImage('assets/preview.png'),
-                    fit: BoxFit.contain,
-                  ),
-                  tag: 'video$index',
-                ),
-              ),
-
-              // Video length box
-              Align(
-                alignment: Alignment(0.85, 0.5),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(1),
-                    color: Colors.black.withOpacity(0.8),
-                  ),
-                  child: Container(
-                    margin: EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.0),
-                    child: Text('46:55', style: TextStyle(color: Color(0xFFD5EAEB))),
-                  ),
-                ),
-              ),
-
-              // Bottom red line
-              Align(
-                alignment: Alignment(-1.0, 0.78),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Color(0xFFF80302),
-                  ),
-                  height: 6,
-                  width: double.infinity, // @point
-                ),
-              ),
-
-            ]
-          ),
-          
-        ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,                            
-                children:[
-                  Text(
-                    title,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                    style: TextStyle(
-                      fontSize: 17.5,
-                      fontWeight: FontWeight.w400
-                    ),
-                  ),
-                  Text(
-                    author,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      color: Color(0xFF757575)
-                    )
-                  ),
-                ]
-              ),
-            ),
-            IconButton(
-              iconSize: 10.0,
-              padding: EdgeInsets.all(0.0),
-              constraints: BoxConstraints(),
-              color: Colors.black,
-              icon: Icon(Icons.more_vert, size: 20.0),
-              onPressed: (){}
-            ),
-          ],
-        ),
-      ],
-    )
-  );
-}
-
 Widget generateHistoryTab(BuildContext context, [int omitVideoIdx = -1])
 {
   return RecentTab();
@@ -310,11 +203,6 @@ Widget generateAction(Icon icon, String title, [String? subtitle])
       ]
     ),
   );
-}
-
-Widget generateActionsTab()
-{
-  return ActionsTab();
 }
 
 Widget generatePlaylist(String title,
@@ -407,11 +295,6 @@ Widget generatePlaylist(String title,
   );
 }
 
-Widget generatePlaylistsTab()
-{
-  return PlaylistsTab();
-}
-
 Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
 {
   return Container(
@@ -435,14 +318,14 @@ Widget generateYoutubeBody(BuildContext context)
       children: [
         Container(
           padding: EdgeInsets.only(left: leftPadding, top: 24.0),
-          child: generateHistoryTab(context),
+          child: RecentTab(),
         ),
         
         generateDivider(EdgeInsets.only(top: 22.0)),
 
         Container(
           padding: EdgeInsets.only(left: leftPadding, top: 20.0),
-          child: generateActionsTab(),
+          child: ActionsTab(),
         ),
 
         generateDivider(),
@@ -450,7 +333,7 @@ Widget generateYoutubeBody(BuildContext context)
         Expanded(
           child: Padding(
             padding: EdgeInsets.only(left: leftPadding, top: 15.0, right: leftPadding),
-            child: generatePlaylistsTab(),
+            child: PlaylistsTab(),
           )
         ),
       ],
@@ -673,6 +556,8 @@ class VideoPage extends StatelessWidget
   }
 }
 
+// ----------------------------------------------------------------------------
+
 abstract class Tab extends StatelessWidget
 {
   @override
@@ -728,11 +613,10 @@ class RecentTab extends Tab
         continue;
       }
 
-      previews.add(generateVideoPreview(
-          context,
+      previews.add(VideoWidget(
           'Material design. Scaffold widget. Flutter. Лекція 4',
           'Сергій Титенко | Web-development',
-          i,
+          46, 55, i,
         )
       );
     }
@@ -791,5 +675,130 @@ class PlaylistsTab extends Tab
         ]
       ),
     );   
+  }
+}
+
+class VideoWidget extends StatefulWidget
+{
+  final String title;
+  final String author;
+  final int minutes;
+  final int seconds;
+  final int id;  
+
+  VideoWidget(this.title, this.author, this.minutes, this.seconds, this.id);
+  
+  @override
+  State<VideoWidget> createState() => VideoWidgetState();
+}
+
+class VideoWidgetState extends State<VideoWidget>
+{
+  @override
+  Widget build(BuildContext context)
+  {
+    return Container(
+      padding: EdgeInsets.only(right: 22),
+      width: 202,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Container(
+            alignment: Alignment.center,
+            height: 113,
+            child: Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        transitionDuration: Duration(milliseconds: 2500),
+                        pageBuilder: (A, B, C) => VideoPage(widget.title, widget.author, widget.id),
+                      ),
+                    );
+                  },
+                  child: Hero(
+                    child: Image(
+                      image: AssetImage('assets/preview.png'),
+                      fit: BoxFit.contain,
+                    ),
+                    tag: 'video${widget.id}',
+                  ),
+                ),
+
+                // Video length box
+                Align(
+                  alignment: Alignment(0.85, 0.5),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(1),
+                      color: Colors.black.withOpacity(0.8),
+                    ),
+                    child: Container(
+                      margin: EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.0),
+                      child: Text('46:55', style: TextStyle(color: Color(0xFFD5EAEB))),
+                    ),
+                  ),
+                ),
+
+                // Bottom red line
+                Align(
+                  alignment: Alignment(-1.0, 0.78),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Color(0xFFF80302),
+                    ),
+                    height: 6,
+                    width: double.infinity,
+                  ),
+                ),
+
+              ]
+            ),
+
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,                            
+                  children:[
+                    Text(
+                      widget.title,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      style: TextStyle(
+                        fontSize: 17.5,
+                        fontWeight: FontWeight.w400
+                      ),
+                    ),
+                    Text(
+                      widget.author,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: Color(0xFF757575)
+                      )
+                    ),
+                  ]
+                ),
+              ),
+              IconButton(
+                iconSize: 10.0,
+                padding: EdgeInsets.all(0.0),
+                constraints: BoxConstraints(),
+                color: Colors.black,
+                icon: Icon(Icons.more_vert, size: 20.0),
+                onPressed: (){}
+              ),
+            ],
+          ),
+        ],
+      )
+    );    
   }
 }
