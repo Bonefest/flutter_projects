@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
-void main() => runApp(MyApp());
+import 'main_model.dart';
+
+void main() => runApp(
+  ChangeNotifierProvider(
+    create: (context) => MainModel(),
+    child: MyApp()
+  ),
+);
 
 class MyApp extends StatelessWidget {
   @override
@@ -160,11 +168,6 @@ Widget generateYoutubeBottomBar(int index, Function(int) onTap)
   );
 }
 
-Widget generateHistoryTab(BuildContext context, [int omitVideoIdx = -1])
-{
-  return RecentTab();
-}  
-
 Widget generateAction(Icon icon, String title, [String? subtitle])
 {
   var textChildren = [
@@ -208,91 +211,7 @@ Widget generateAction(Icon icon, String title, [String? subtitle])
 Widget generatePlaylist(String title,
   [bool createNew = false, String? author, int? videoCount, double padding = 22.0])
 {
-  Widget previewWidget;
-  if(createNew)
-  {
-    previewWidget = Icon(
-      Icons.add,
-      color: Color(0xFF3E6E98),
-    );
-  }
-  else
-  {
-    previewWidget = Image(
-      image: AssetImage('assets/preview.png'),
-      fit: BoxFit.fill,
-    );
-  }
-
-  Widget textWidget;
-  if(createNew)
-  {
-    textWidget = Text(
-      title,
-      style: TextStyle(
-        color: Color(0xFF3E6E98),        
-        fontSize: 16
-      ),
-    );
-  }
-  else
-  {
-    var textChildren = [
-      Row(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,              
-            ),
-          ),
-        ],
-      )
-    ];
-
-    if(author != null)
-    {
-      assert(videoCount != null);
-      
-      textChildren.add(
-        Row(
-          children: [
-            Text(
-              author != '' ? '$author • $videoCount videos' : '$videoCount videos',
-              style: TextStyle(
-                color: Color(0xFF757575),
-                fontSize: 14,
-              ),
-            )
-          ],
-        )
-      );
-    }
-
-    textWidget = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: textChildren,
-    );
-  }
-  
-  return Container(
-    padding: EdgeInsets.only(top: createNew ? 0.0 : padding),
-    child: Row(
-      crossAxisAlignment: createNew? CrossAxisAlignment.center : CrossAxisAlignment.start,
-      children: [
-        Container(
-          padding: EdgeInsets.only(right: 22.0),
-          child: SizedBox(
-            width: 55,
-            height: 55,
-            child: previewWidget,
-          ),
-        ),
-        textWidget,
-      ],
-    ),
-  );
+  return PlaylistWidget(title, createNew, author, videoCount);
 }
 
 Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
@@ -309,7 +228,7 @@ Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
   );
 }
 
-Widget generateYoutubeBody(BuildContext context)
+Widget generateYoutubeBody(BuildContext context, Function(VideoWidget) onVideoDTap)
 {
   const leftPadding = 22.0;
   
@@ -318,7 +237,7 @@ Widget generateYoutubeBody(BuildContext context)
       children: [
         Container(
           padding: EdgeInsets.only(left: leftPadding, top: 24.0),
-          child: RecentTab(),
+          child: RecentTab(onVideoDTap),
         ),
         
         generateDivider(EdgeInsets.only(top: 22.0)),
@@ -395,7 +314,6 @@ Drawer generateYoutubeDrawer(Function() closeCallback)
 
 class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
 {
-
   int _pageIdx = 0;
   PageController? _pageController;
 
@@ -425,6 +343,21 @@ class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
         );
     });
   }
+
+  @override
+  bool onVideoDTap(VideoWidget video)
+  {
+    if(video.selected)
+    {
+      Provider.of<MainModel>(context, listen: false).removeVideo(video.data);
+    }
+    else
+    {
+      Provider.of<MainModel>(context, listen: false).addVideo(video.data);
+    }
+    
+    return true;
+  }
   
   @override
   Widget build(BuildContext context)
@@ -441,23 +374,23 @@ class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
           children: [
             ColoredBox(
               color: Colors.white,
-              child: generateYoutubeBody(context),
+              child: generateYoutubeBody(context, onVideoDTap),
             ),
             ColoredBox(
               color: Colors.white,
-              child: generateYoutubeBody(context),
+              child: generateYoutubeBody(context, onVideoDTap),
             ),
             ColoredBox(
               color: Colors.black,
-              child: generateYoutubeBody(context),
+              child: generateYoutubeBody(context, onVideoDTap),
             ),
             ColoredBox(
               color: Colors.white,
-              child: generateYoutubeBody(context),
+              child: generateYoutubeBody(context, onVideoDTap),
             ),
             ColoredBox(
               color: Colors.white,
-              child: generateYoutubeBody(context),
+              child: generateYoutubeBody(context, onVideoDTap),
             ),            
           ],
         ),
@@ -530,7 +463,6 @@ class VideoPage extends StatelessWidget
     String author,
     int index
   ): _title=title, _author=author, _index=index {}
-
   
   @override
   Widget build(BuildContext context)
@@ -543,8 +475,7 @@ class VideoPage extends StatelessWidget
             children: [
               Container(
                 padding: EdgeInsets.only(left: 22.0, top: 24.0),
-                child: generateHistoryTab(context, _index),
-
+                child: RecentTab((VideoWidget) {}),
               ),
 
               generateVideoWidget(_title, _author, _index),
@@ -594,6 +525,10 @@ abstract class Tab extends StatelessWidget
 
 class RecentTab extends Tab
 {
+  final Function(VideoWidget) onVideoSelectedCallback;
+
+  RecentTab(this.onVideoSelectedCallback);
+  
   @override
   String? getTitle()
   {
@@ -613,11 +548,15 @@ class RecentTab extends Tab
         continue;
       }
 
+      
       previews.add(VideoWidget(
-          'Material design. Scaffold widget. Flutter. Лекція 4',
-          'Сергій Титенко | Web-development',
-          46, 55, i,
-        )
+          VideoData(
+            'Material design. Scaffold widget. Flutter. Лекція 4',
+            'Сергій Титенко | Web-development',
+            46, 55, i,
+          ),
+          onVideoSelectedCallback,
+        ),
       );
     }
 
@@ -663,15 +602,31 @@ class PlaylistsTab extends Tab
   @override
   Widget generateContent(BuildContext context)
   {
+    String newPlaylistTitle = 'New playlist';
+    List<VideoData> selectedVideos = Provider.of<MainModel>(context, listen: true).selectedVideos;
+    if(selectedVideos.length > 0)
+    {
+      newPlaylistTitle = newPlaylistTitle + ' with videos: ';
+      for(VideoData video in selectedVideos)
+      {
+        newPlaylistTitle += video.title + '; ';
+      }
+
+      if(newPlaylistTitle.length > 75)
+      {
+        newPlaylistTitle = newPlaylistTitle.replaceRange(74, null, '...');
+      }
+    }
+    
     return Expanded(
       child: ListView(
         shrinkWrap: true,
         children: [
-          generatePlaylist('New playlist', true),
-          generatePlaylist('3D Game Engine Development Tutorial', false, 'thebennybox', 61, 10.0),
-          generatePlaylist('ACM/ICPC Training: For Beginner', false, 'Amy Knuth', 23),
-          generatePlaylist('AngularJS tutorial for beginners', false, 'kudvenkat', 53),            
-          generatePlaylist('Beatles', false, '', 23),                        
+          PlaylistWidget(newPlaylistTitle, true),
+          PlaylistWidget('3D Game Engine Development Tutorial', false, 'thebennybox', 61),
+          PlaylistWidget('ACM/ICPC Training: For Beginner', false, 'Amy Knuth', 23),
+          PlaylistWidget('AngularJS tutorial for beginners', false, 'kudvenkat', 53),            
+          PlaylistWidget('Beatles', false, '', 23),                        
         ]
       ),
     );   
@@ -680,13 +635,12 @@ class PlaylistsTab extends Tab
 
 class VideoWidget extends StatefulWidget
 {
-  final String title;
-  final String author;
-  final int minutes;
-  final int seconds;
-  final int id;  
-
-  VideoWidget(this.title, this.author, this.minutes, this.seconds, this.id);
+  final VideoData data;
+  final Function(VideoWidget) _onSelectedCallback;
+  
+  bool selected = false;
+  
+  VideoWidget(this.data, this._onSelectedCallback);
   
   @override
   State<VideoWidget> createState() => VideoWidgetState();
@@ -714,16 +668,38 @@ class VideoWidgetState extends State<VideoWidget>
                       context,
                       PageRouteBuilder(
                         transitionDuration: Duration(milliseconds: 2500),
-                        pageBuilder: (A, B, C) => VideoPage(widget.title, widget.author, widget.id),
+                        pageBuilder: (A, B, C) => VideoPage(widget.data.title, widget.data.author, widget.data.id),
                       ),
                     );
                   },
+
+                  onDoubleTap: () {
+                    // NOTE: If callback has been processed - redraw
+                    if(widget._onSelectedCallback(widget))
+                    {
+                      setState(() {
+                          widget.selected = !widget.selected;
+                      });
+                    }
+                  },
+                  
                   child: Hero(
-                    child: Image(
-                      image: AssetImage('assets/preview.png'),
-                      fit: BoxFit.contain,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.blue,
+                            spreadRadius: widget.selected ? 2.0 : 0.0,
+                            blurRadius: widget.selected ? 8.0 : 0.0,
+                          ),
+                        ],
+                      ),
+                      child: Image(
+                        image: AssetImage('assets/preview.png'),
+                        fit: BoxFit.contain,
+                      ),
                     ),
-                    tag: 'video${widget.id}',
+                    tag: 'video${widget.data.id}',
                   ),
                 ),
 
@@ -737,7 +713,7 @@ class VideoWidgetState extends State<VideoWidget>
                     ),
                     child: Container(
                       margin: EdgeInsets.symmetric(horizontal: 5.5, vertical: 1.0),
-                      child: Text('46:55', style: TextStyle(color: Color(0xFFD5EAEB))),
+                      child: Text('${widget.data.minutes}:${widget.data.seconds}', style: TextStyle(color: Color(0xFFD5EAEB))),
                     ),
                   ),
                 ),
@@ -767,7 +743,7 @@ class VideoWidgetState extends State<VideoWidget>
                   crossAxisAlignment: CrossAxisAlignment.start,                            
                   children:[
                     Text(
-                      widget.title,
+                      widget.data.title,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
                       style: TextStyle(
@@ -776,7 +752,7 @@ class VideoWidgetState extends State<VideoWidget>
                       ),
                     ),
                     Text(
-                      widget.author,
+                      widget.data.author,
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                       style: TextStyle(
@@ -801,4 +777,111 @@ class VideoWidgetState extends State<VideoWidget>
       )
     );    
   }
+}
+
+class PlaylistWidget extends StatelessWidget
+{
+
+  final bool createNew;
+  final String title;
+  final String? author;
+  final int? videoCount;
+
+  PlaylistWidget(this.title, [bool createNew = false, String? author, int? videoCount]):
+    createNew = createNew,
+    author = author,
+    videoCount = videoCount { }
+  
+  @override
+  Widget build(BuildContext context)
+  {
+    const double padding = 22.0;
+    
+    Widget previewWidget;
+    if(createNew)
+    {
+      previewWidget = Icon(
+        Icons.add,
+        color: Color(0xFF3E6E98),
+      );
+    }
+    else
+    {
+      previewWidget = Image(
+        image: AssetImage('assets/preview.png'),
+        fit: BoxFit.fill,
+      );
+    }
+
+    Widget textWidget;
+    if(createNew)
+    {
+      textWidget = Text(
+        title,
+        style: TextStyle(
+          color: Color(0xFF3E6E98),        
+          fontSize: 16
+        ),
+      );
+    }
+    else
+    {
+      var textChildren = [
+        Row(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,              
+              ),
+            ),
+          ],
+        )
+      ];
+
+      if(author != null)
+      {
+        assert(videoCount != null);
+
+        textChildren.add(
+          Row(
+            children: [
+              Text(
+                author != '' ? '$author • $videoCount videos' : '$videoCount videos',
+                style: TextStyle(
+                  color: Color(0xFF757575),
+                  fontSize: 14,
+                ),
+              )
+            ],
+          )
+        );
+      }
+
+      textWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: textChildren,
+      );
+    }
+
+    return Container(
+      padding: EdgeInsets.only(top: createNew ? 0.0 : padding),
+      child: Row(
+        crossAxisAlignment: createNew? CrossAxisAlignment.center : CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: EdgeInsets.only(right: 22.0),
+            child: SizedBox(
+              width: 55,
+              height: 55,
+              child: previewWidget,
+            ),
+          ),
+          textWidget,
+        ],
+      ),
+    );    
+  }
+  
 }
