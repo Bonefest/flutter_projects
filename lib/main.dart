@@ -506,8 +506,9 @@ abstract class Tab extends StatelessWidget
             fontWeight: FontWeight.w400,
           )
         ),
-      ),      
-    ] : [];
+      ),
+      generateHeader(context),
+    ] : [generateHeader(context)];
     
     return Expanded(
       child: Column(
@@ -519,7 +520,11 @@ abstract class Tab extends StatelessWidget
     );    
   }
 
-  String? getTitle();  
+  String? getTitle();
+  Widget generateHeader(BuildContext context)
+  {
+    return SizedBox.shrink();
+  }  
   Widget generateContent(BuildContext context);
 }
 
@@ -565,6 +570,49 @@ class RecentTab extends Tab
       child: Row(
         children: previews,
       ),
+    );
+  }
+
+  @override
+  Widget generateHeader(BuildContext context)
+  {
+    return Consumer<MainModel>(
+      builder: (context, model, child) {
+        if(model.selectedVideos.length > 0)
+        {
+          return Container(
+            child: Row(
+              children: [
+                Text(
+                  "(selected ${model.selectedVideos.length} videos",
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    model.removeAllVideos();
+                  },
+                  child:Icon(Icons.close, size: 17.0),
+                ),
+                Text(
+                  ")",
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),                
+              ],
+            ),
+            padding: EdgeInsets.only(bottom: 15, left: 10),
+          );
+        }
+        else
+        {
+          return super.generateHeader(context);
+        }
+      }
     );
   }
 }
@@ -651,6 +699,12 @@ class VideoWidgetState extends State<VideoWidget>
   @override
   Widget build(BuildContext context)
   {
+    bool wasCleared = Provider.of<MainModel>(context, listen: true).selectedVideos.length == 0;
+    if(wasCleared)
+    {
+      widget.selected = false;
+    }
+    
     return Container(
       padding: EdgeInsets.only(right: 22),
       width: 202,

@@ -29,4 +29,10 @@ class MainModel extends ChangeNotifier
     selectedVideos.removeWhere((VideoData givenVideo) { return givenVideo.id == video.id; });
     notifyListeners();
   }
+
+  void removeAllVideos()
+  {
+    selectedVideos.clear();
+    notifyListeners();
+  }
 }
