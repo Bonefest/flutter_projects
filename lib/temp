@@ -11,7 +11,31 @@ Decomposition:
 3. Video - Stateful widget. When pressed, changes state to something.
 4. Playlist
 
+                                                                                     
+                                   MyApp                                            
+                    _________________/\______________            |                   
+                   |                                 |           |                   
+                MainPage                         VideoPage       |                   
+                   |                                 |           |                   
+                  Tab                                |           |                   
+         _________/|\____________                    |           |        MainModel  
+         |         |            |                    |           |                   
+     RecentTab ActionsTab PlaylistsTab             Video         |                   
+         |                      |                                |                   
+        Video -   -   -   > Playlist                             |                   
+
+
 Global knowledge:
 
 1. Selected video
 2. Watch later
+
+1) Декомпозиція додатку на Stateful та Stateless віджети
+2) Реалізувати зміни стану (Приклад: при натисканні на кнопку)
+3) Продемонструвати підхід "прокидання стану нагору" (lifting state up (Приклад: корзина інтернет магазину змінює свій стан (додає продукт) при натисканні на кнопку "Купити" на головному віджеті)
+4) Побудувати нетривіальне дерево віджетів
+5) Продемонструвати використання класу ChangeNotifier
+6) Побудувати Модель стану, до якої будуть здійснюватись звернення
+7) Продемонструвати доступ до моделі через Consumer
+8) Продемонструвати доступ до моделі через Provider.of
+
