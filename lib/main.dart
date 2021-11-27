@@ -4,6 +4,18 @@ import 'package:provider/provider.dart';
 
 import 'main_model.dart';
 
+Map<String, Color> styles = {};
+
+void updateStyles(bool classic)
+{
+  styles["icon"] = classic ? Colors.black : Colors.white;
+  styles["bar_background"] = classic ? Colors.white: Color(0xFF111111);
+  styles["background"] = classic ? Colors.white : Color(0xFF222222);
+  styles["primary_text"] = classic ? Colors.black : Colors.white;
+  styles["secondary_text"] = classic ? Color(0xFF757575) : Color(0xFFAAAAAA);
+  styles["divider"] = classic ? Color(0xFFE1E1E1): Color(0xFF444444);
+}
+
 void main() => runApp(
   ChangeNotifierProvider(
     create: (context) => MainModel(),
@@ -14,9 +26,12 @@ void main() => runApp(
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    bool isClassicTheme = Provider.of<MainModel>(context, listen: true).isClassicTheme;
+    updateStyles(isClassicTheme);
+    
     return MaterialApp(
       title: 'Youtube design',
-      home: GeneralStatefulWidget()
+      home: GeneralStatefulWidget(),
     );
   }
 }
@@ -50,10 +65,12 @@ Container generateUserLogo(String userName, Color backgroundColor, [double size 
   );
 }
 
-AppBar generateYoutubeAppBar([double spaceBetweenIcons = 30.0])
+AppBar generateYoutubeAppBar(BuildContext context, [double spaceBetweenIcons = 30.0])
 {
+  bool isClassicTheme = Provider.of<MainModel>(context, listen: false).isClassicTheme;
+  
   return AppBar(
-    iconTheme: IconThemeData(color: Colors.black),
+    iconTheme: IconThemeData(color: styles["icon"]!),
     flexibleSpace: Container(
       padding: EdgeInsets.symmetric(horizontal: 22),
       child: Row(
@@ -64,7 +81,7 @@ AppBar generateYoutubeAppBar([double spaceBetweenIcons = 30.0])
             //padding: EdgeInsets.only(left: 32, top: 48, bottom: 18),            
             child: Image(
               image: AssetImage(
-                'assets/youtube_logo.png',
+                isClassicTheme ? 'assets/youtube_logo.png' : 'assets/youtube_logo_dark.png',
               ),
               fit: BoxFit.contain,              
               filterQuality: FilterQuality.medium,
@@ -77,15 +94,26 @@ AppBar generateYoutubeAppBar([double spaceBetweenIcons = 30.0])
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,            
               children: [
+                IconButton(
+                  icon: Icon(
+                    isClassicTheme ? Icons.flashlight_off_rounded : Icons.flashlight_on_rounded,
+                    color: styles["icon"],
+                    size: 24.0,
+                  ),
+                  
+                  onPressed: () { Provider.of<MainModel>(context, listen: false).switchTheme(); }
+                ),
+                SizedBox(width: spaceBetweenIcons),
+                
                 Icon(
                   Icons.notifications_none,
-                  color: Colors.black,
+                  color: styles["icon"],
                   size: 30.0,
                 ),
                 SizedBox(width: spaceBetweenIcons),
                 Icon(
                   Icons.search,
-                  color: Colors.black,
+                  color: styles["icon"],
                   size: 30.0,
                 ),
                 SizedBox(width: spaceBetweenIcons),
@@ -97,7 +125,7 @@ AppBar generateYoutubeAppBar([double spaceBetweenIcons = 30.0])
       ),
     ),
     
-    backgroundColor: const Color(0xFFFFFFFF),
+    backgroundColor: styles["bar_background"]!
   );
 }
 
@@ -113,25 +141,25 @@ Widget generateYoutubeBottomBar(int index, Function(int) onTap)
         BottomNavigationBarItem(
           icon: Icon(
             Icons.home_outlined,
-            color: Colors.black,
+            color: styles["icon"],
             size: 28.0,
           ),
-          title: Text('Home'),
+          title: Text('Home', style: TextStyle(color: styles["primary_text"])),
         ),
 
         BottomNavigationBarItem(
           icon: Icon(
             Icons.settings_outlined,
-            color: Colors.black,
+            color: styles["icon"],
             size: 28.0,
           ),
-          title: Text('Settings'),
+          title: Text('Settings', style: TextStyle(color: styles["primary_text"])),
         ),
 
         BottomNavigationBarItem(
           icon: Icon(
             Icons.add_circle_outline,
-            color: Colors.black,
+            color: styles["icon"],
             size: 40.0,
           ),
           title: Text('Create', style: TextStyle(fontSize: 0)),
@@ -140,22 +168,22 @@ Widget generateYoutubeBottomBar(int index, Function(int) onTap)
         BottomNavigationBarItem(
           icon: Icon(
             Icons.subscriptions_outlined,
-            color: Colors.black,
+            color: styles["icon"],
             size: 28.0,
           ),
-          title: Text('Subscriptions'),
+          title: Text('Subscriptions', style: TextStyle(color: styles["primary_text"])),
         ),
         
         BottomNavigationBarItem(
           icon: Icon(
             Icons.video_library,
-            color: Colors.black,
+            color: styles["icon"],
             size: 28.0,
           ),
-          title: Text('Library'),
+          title: Text('Library', style: TextStyle(color: styles["primary_text"])),
         ),            
       ],
-      backgroundColor: Color(0xFFFFFFFF),
+      backgroundColor: styles["bar_background"],
       elevation: 0.0,
     ),
     decoration: BoxDecoration(
@@ -176,6 +204,7 @@ Widget generateAction(Icon icon, String title, [String? subtitle])
       style: TextStyle(
         fontSize: 17,
         fontWeight: FontWeight.w500,
+        color: styles["primary_text"],
       ),
     ),
   ];
@@ -185,7 +214,7 @@ Widget generateAction(Icon icon, String title, [String? subtitle])
         subtitle,
         style: TextStyle(
           fontSize: 14,
-          color: Color(0xFF6F6F6F),
+          color: styles["secondary_text"],
         ),
     ));
   }
@@ -221,7 +250,7 @@ Widget generateDivider([EdgeInsets padding = EdgeInsets.zero])
     decoration: BoxDecoration(
       border: Border(
         bottom: BorderSide(
-          color: Color(0xFFE1E1E1),
+          color: styles["divider"]!
         ),
       ),
     ),    
@@ -363,7 +392,7 @@ class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
   Widget build(BuildContext context)
   {
     return Scaffold(
-      appBar: generateYoutubeAppBar(),
+      appBar: generateYoutubeAppBar(context),
       drawer: generateYoutubeDrawer((){Navigator.pop(context);}),
       body: Center(
         child: PageView(
@@ -373,7 +402,7 @@ class _GeneralStatefulWidgetState extends State<GeneralStatefulWidget>
           },
           children: [
             ColoredBox(
-              color: Colors.white,
+              color: styles["background"]!,
               child: generateYoutubeBody(context, onVideoDTap),
             ),
             ColoredBox(
@@ -468,7 +497,7 @@ class VideoPage extends StatelessWidget
   Widget build(BuildContext context)
   {
     return Scaffold(
-      appBar: generateYoutubeAppBar(),
+      appBar: generateYoutubeAppBar(context),
       body: Center(
         child: Expanded(
           child: Column (
@@ -504,6 +533,7 @@ abstract class Tab extends StatelessWidget
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w400,
+            color: styles["primary_text"],
           )
         ),
       ),
@@ -630,10 +660,10 @@ class ActionsTab extends Tab
   {
     return Column(
       children: [
-        generateAction(Icon(Icons.history, size: 28.0), 'History'),
-        generateAction(Icon(Icons.slideshow_sharp, size: 28.0), 'Your videos'),
-        generateAction(Icon(Icons.theaters, size: 28.0), 'Your movies'),
-        generateAction(Icon(Icons.watch_later_outlined, size: 28.0), 'Watch later', '286 unwatched videos'),
+        generateAction(Icon(Icons.history, color: styles["icon"], size: 28.0), 'History'),
+        generateAction(Icon(Icons.slideshow_sharp, color: styles["icon"], size: 28.0), 'Your videos'),
+        generateAction(Icon(Icons.theaters, color: styles["icon"], size: 28.0), 'Your movies'),
+        generateAction(Icon(Icons.watch_later_outlined, color: styles["icon"], size: 28.0), 'Watch later', '286 unwatched videos'),
       ],
     );    
   }
@@ -802,7 +832,8 @@ class VideoWidgetState extends State<VideoWidget>
                       maxLines: 2,
                       style: TextStyle(
                         fontSize: 17.5,
-                        fontWeight: FontWeight.w400
+                        fontWeight: FontWeight.w400,
+                        color: styles["primary_text"]!,
                       ),
                     ),
                     Text(
@@ -811,7 +842,7 @@ class VideoWidgetState extends State<VideoWidget>
                       maxLines: 1,
                       style: TextStyle(
                         fontSize: 13.5,
-                        color: Color(0xFF757575)
+                        color: styles["secondary_text"]!,
                       )
                     ),
                   ]
@@ -822,7 +853,7 @@ class VideoWidgetState extends State<VideoWidget>
                 padding: EdgeInsets.all(0.0),
                 constraints: BoxConstraints(),
                 color: Colors.black,
-                icon: Icon(Icons.more_vert, size: 20.0),
+                icon: Icon(Icons.more_vert, size: 20.0, color: styles["icon"]),
                 onPressed: (){}
               ),
             ],
@@ -887,7 +918,8 @@ class PlaylistWidget extends StatelessWidget
               title,
               style: TextStyle(
                 fontSize: 16,
-                fontWeight: FontWeight.w500,              
+                fontWeight: FontWeight.w500,
+                color: styles["primary_text"],
               ),
             ),
           ],
