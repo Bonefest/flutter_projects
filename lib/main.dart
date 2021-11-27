@@ -1,37 +1,103 @@
+import 'dart:convert';
+import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart' show rootBundle;
+import 'package:http/http.dart' as http;
 
+import 'dart:math';
 import 'main_model.dart';
 
-Map<String, Color> styles = {};
+Map<String, Color> classicStyles = {};
+Map<String, Color> darkStyles = {};
+Map<String, Color> styles =
+{
+  "icon": Colors.white,
+  "bar_background": Colors.white,
+  "background": Colors.white,
+  "primary_text": Colors.white,
+  "secondary_text": Colors.white,
+  "divider": Colors.white,
+  "bar": Colors.white
+};
+
+UserData data = UserData();
 
 void updateStyles(bool classic)
 {
-  styles["icon"] = classic ? Colors.black : Colors.white;
-  styles["bar_background"] = classic ? Colors.white: Color(0xFF111111);
-  styles["background"] = classic ? Colors.white : Color(0xFF222222);
-  styles["primary_text"] = classic ? Colors.black : Colors.white;
-  styles["secondary_text"] = classic ? Color(0xFF757575) : Color(0xFFAAAAAA);
-  styles["divider"] = classic ? Color(0xFFE1E1E1): Color(0xFF444444);
+  if(classicStyles.length == 0 || darkStyles.length == 0) return;
+  
+  styles = classic ? classicStyles : darkStyles;
 }
 
-void main() => runApp(
-  ChangeNotifierProvider(
-    create: (context) => MainModel(),
-    child: MyApp()
-  ),
-);
+Map<String, Color> parseColors(String text)
+{
+  Map<String, Color> result = {};
+  print(text);
+  Map<String, dynamic> jsonMap = jsonDecode(text);
+
+  jsonMap.forEach((k, v) { result[k] = Color(int.parse(v, radix: 16)); });
+
+
+  return result;
+}
+
+void readStyles(MainModel model)
+{
+  rootBundle.loadString('assets/light_styles.json').then((value) {
+      classicStyles = parseColors(value);
+      model.switchTheme();
+  });
+
+  rootBundle.loadString('assets/dark_styles.json').then((value) {
+      darkStyles = parseColors(value);
+      model.forceRedraw();
+  });
+}
+
+void readUserData(MainModel model) async
+{
+  var response = await http.get(
+    Uri.parse('https://mocki.io/v1/ed6186c2-f2e0-4715-b101-1b4d1bf67be1')
+  );
+
+  if(response.statusCode == 200)
+  {
+    data = UserData.parseJson(jsonDecode(response.body));
+  }
+}
+
+void main()
+{
+  runApp(
+    ChangeNotifierProvider(
+      create: (context)
+      {
+        MainModel model = new MainModel();
+        readUserData(model);
+        readStyles(model);
+
+        return model;
+      },
+      child: MyApp()
+    ),
+  );
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    bool isClassicTheme = Provider.of<MainModel>(context, listen: true).isClassicTheme;
-    updateStyles(isClassicTheme);
+    MainModel model = Provider.of<MainModel>(context, listen: true);
+    updateStyles(model.isClassicTheme);
     
     return MaterialApp(
       title: 'Youtube design',
-      home: GeneralStatefulWidget(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => GeneralStatefulWidget(),
+        '/statistics': (context) => StatisticsWidget()
+      }
     );
   }
 }
@@ -96,7 +162,7 @@ AppBar generateYoutubeAppBar(BuildContext context, [double spaceBetweenIcons = 3
               children: [
                 IconButton(
                   icon: Icon(
-                    isClassicTheme ? Icons.flashlight_off_rounded : Icons.flashlight_on_rounded,
+                    isClassicTheme ? Icons.flashlight_on_rounded : Icons.flashlight_off_rounded,
                     color: styles["icon"],
                     size: 24.0,
                   ),
@@ -117,7 +183,16 @@ AppBar generateYoutubeAppBar(BuildContext context, [double spaceBetweenIcons = 3
                   size: 30.0,
                 ),
                 SizedBox(width: spaceBetweenIcons),
-                generateUserLogo('T', Color(0xFFF36F0B)),
+                IconButton(
+                  icon: Icon(Icons.question_answer,
+                    color: styles["icon"],
+                    size: 24.0,
+                  ),
+
+                  onPressed: () => Navigator.pushNamed(context, '/statistics'),
+                ),
+                SizedBox(width: spaceBetweenIcons),                
+                generateUserLogo(data.userName[0], data.color)
               ],
             ),
           ),
@@ -473,7 +548,7 @@ Widget generateVideoWidget(String title, String author, int index)
         Row(
           mainAxisAlignment: MainAxisAlignment.center,          
           children: [
-            Text('$title'),
+            Text('$title', style: TextStyle(color: styles["primary_text"])),
           ],
         )
       ]
@@ -512,6 +587,164 @@ class VideoPage extends StatelessWidget
           ),
         ),
       ),
+
+      backgroundColor: styles["background"],
+    );
+  }
+}
+
+
+class StatisticsBarsWidget extends StatefulWidget
+{
+  late LinkedHashMap<String, double> _values;
+  StatisticsBarsWidget(LinkedHashMap<String, double> values)
+  {
+    _values = values;
+  }
+  
+  @override
+  State<StatisticsBarsWidget> createState() => _StatisticsBarsWidgetState();  
+}
+
+class _StatisticsBarsWidgetState extends State<StatisticsBarsWidget> with TickerProviderStateMixin
+{
+  late AnimationController _controller;
+  late Animation<double> _curve;
+  late LinkedHashMap<String, List<Animation<dynamic>>> _animations;
+  
+  _StatisticsBarsWidgetState()
+  {
+    _animations = new LinkedHashMap<String, List<Animation<dynamic>>>();
+  }
+
+  @override
+  void initState()
+  {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 5),
+      vsync: this,
+    )..repeat();
+
+    _curve = CurvedAnimation(parent: _controller, curve: Curves.linear);
+    
+    double maxValue = widget._values.values.reduce(max);
+    double minValue = widget._values.values.reduce(min);
+    double normalizer = 255.0 / (maxValue - minValue);
+
+    print(normalizer);
+    
+    widget._values.forEach((k, v) {
+        _animations[k] = [];
+        
+        _animations[k]?.add(Tween<double>(begin: 0, end: v).
+          animate(
+            CurvedAnimation(
+              parent: _controller,
+              curve: Curves.ease
+            )
+        ));
+
+        int target = max( (v - minValue) * normalizer, 20).round();
+
+        _animations[k]?.add(ColorTween(
+            begin: Color.fromARGB(255, (( (v - minValue) / (maxValue - minValue)) * 255).toInt(), 0, 0),
+            end: Color.fromARGB(255, target, 0, 0)).animate(
+            CurvedAnimation(
+              parent: _controller,
+              curve: Curves.ease
+            )
+          )
+        );
+
+    });
+    _controller.forward();
+  }
+  
+  @override
+  void dispose()
+  {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context)
+  {
+    List<Widget> names = [];
+    List<Widget> bars = [];
+
+    _animations.forEach((name, anim) {
+
+        names.add(
+          Text(name, style: TextStyle(color: styles["primary_text"])),
+        );
+        
+        bars.add(
+          AnimatedBuilder(
+            animation: anim[0],
+            child: Container(),
+            builder: (context, child)
+            {
+              return Container(
+                height: 15.0,
+                width: anim[0].value,
+                color: anim[1].value
+              );
+            }
+          ),
+        );
+    });
+
+    return Container(
+      child: Row(
+        children: [
+          Column(
+            children: names
+          ),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: bars
+          )
+        ]
+      ),
+    );
+  }
+}
+
+class StatisticsWidget extends StatefulWidget
+{
+  @override
+  State<StatisticsWidget> createState() => _StatisticsWidgetState();
+}
+
+class _StatisticsWidgetState extends State<StatisticsWidget>
+{
+  
+  @override
+  Widget build(BuildContext context)
+  {
+    LinkedHashMap<String, double> map = new LinkedHashMap<String, double>();
+    map["monday"] = 500.0;
+    map["tuesday"] = 800.0;
+    map["wednesday"] = 700.0;
+    map["thursday"] = 600.0;
+    map["friday"] = 900.0;
+    map["saturday"] = 1100.0;
+    map["sunday"] = 1200.0;      
+    
+    return Scaffold(
+      appBar: generateYoutubeAppBar(context),
+      body: Column (
+        children: [
+          StatisticsBarsWidget(
+            map
+          ),
+        ]
+      ),
+      
+      backgroundColor: styles["background"],
     );
   }
 }

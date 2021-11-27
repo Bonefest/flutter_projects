@@ -2,6 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class UserData
+{
+  String userName = "Unknown";
+  int notificationsCount = 0;
+  int unwatchedVideosCount = 0;
+  Color color = Colors.white;
+
+  UserData() { }
+
+  factory UserData.parseJson(Map<String, dynamic> json)
+  {
+    UserData user = UserData();
+    user.userName = json["name"];
+    user.notificationsCount = json["notifications"];
+    user.unwatchedVideosCount = json["unwatched"];
+    user.color = Color(int.parse(json["color"], radix: 16));
+
+    return user;
+  }
+}
+
 class VideoData
 {
   String title;
@@ -38,6 +59,11 @@ class MainModel extends ChangeNotifier
   MainModel()
   {
     _extractThemePreferences();
+  }
+
+  void forceRedraw()
+  {
+    notifyListeners();
   }
   
   void switchTheme()

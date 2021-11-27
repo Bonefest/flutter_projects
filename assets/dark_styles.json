@@ -1,0 +1,8 @@
+{
+        "icon": "FFFFFFFF",
+        "bar_background": "FF111111",
+        "background": "FF222222",
+        "primary_text": "FFFFFFFF",
+        "secondary_text": "FFAAAAAA",
+        "divider": "FF444444"
+}
