@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
+import 'package:vector_math/vector_math_64.dart' as vector;
 
 import 'dart:math';
 import 'main_model.dart';
@@ -624,7 +625,7 @@ class _StatisticsBarsWidgetState extends State<StatisticsBarsWidget> with Ticker
     _controller = AnimationController(
       duration: const Duration(seconds: 5),
       vsync: this,
-    )..repeat();
+    )..repeat(reverse: true);
 
     _curve = CurvedAnimation(parent: _controller, curve: Curves.linear);
     
@@ -648,7 +649,7 @@ class _StatisticsBarsWidgetState extends State<StatisticsBarsWidget> with Ticker
         int target = max( (v - minValue) * normalizer, 20).round();
 
         _animations[k]?.add(ColorTween(
-            begin: Color.fromARGB(255, (( (v - minValue) / (maxValue - minValue)) * 255).toInt(), 0, 0),
+            begin: Color.fromARGB(255, 20, 0, 0),
             end: Color.fromARGB(255, target, 0, 0)).animate(
             CurvedAnimation(
               parent: _controller,
@@ -713,6 +714,62 @@ class _StatisticsBarsWidgetState extends State<StatisticsBarsWidget> with Ticker
   }
 }
 
+class MovingWidget extends StatefulWidget
+{
+  @override
+  State<MovingWidget> createState() => _MovingWidgetState();  
+}
+
+class _MovingWidgetState extends State<MovingWidget> with TickerProviderStateMixin
+{
+  late AnimationController _controller;
+  late Animation<double> _animation;
+
+  @override
+  void initState()
+  {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 5),
+      vsync: this,
+    )..repeat();
+
+    _animation = CurvedAnimation(parent: _controller, curve: Curves.easeInCubic);
+
+  }
+  
+  @override
+  void dispose()
+  {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context)
+  {
+    return AnimatedBuilder(
+      animation: _animation,
+      child: Container(),
+      builder: (context, child)
+      {
+        return Container(
+          child: Image(
+            image: AssetImage(
+              'assets/youtube_logo.png'
+            ),
+            fit: BoxFit.contain,
+            isAntiAlias: true
+          ),
+          
+          transform: Matrix4.translation(vector.Vector3(cos(_animation.value * 6.28) * 100, 0, 0))
+        );
+      }
+    );
+
+  }
+}
+
 class StatisticsWidget extends StatefulWidget
 {
   @override
@@ -726,7 +783,7 @@ class _StatisticsWidgetState extends State<StatisticsWidget>
   Widget build(BuildContext context)
   {
     LinkedHashMap<String, double> map = new LinkedHashMap<String, double>();
-    map["monday"] = 500.0;
+    map["monday"] = 400.0;
     map["tuesday"] = 800.0;
     map["wednesday"] = 700.0;
     map["thursday"] = 600.0;
@@ -738,9 +795,15 @@ class _StatisticsWidgetState extends State<StatisticsWidget>
       appBar: generateYoutubeAppBar(context),
       body: Column (
         children: [
+          Center(
+            child: Text("How much time you've wasted on the last week", style: TextStyle(fontSize: 24, color: styles["primary_text"])),
+          ),
           StatisticsBarsWidget(
             map
           ),
+          Center(
+            child: Text("Some random moving object", style: TextStyle(fontSize: 24, color: styles["primary_text"])),           ),
+          MovingWidget(),
         ]
       ),
       
@@ -748,6 +811,49 @@ class _StatisticsWidgetState extends State<StatisticsWidget>
     );
   }
 }
+
+class ModalWindow extends StatelessWidget
+{
+  String _question;
+  
+  ModalWindow(this._question);
+  
+  @override
+  Widget build(BuildContext context)
+  {
+    return Scaffold(
+      appBar: generateYoutubeAppBar(context),
+      body: Column (
+        children: [
+          Center(child: Text(_question, style: TextStyle(fontSize: 24, color: styles["primary_text"]))),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children:[
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.pop(context, true);
+                },
+                child: Text('Yes'),
+              ),
+              
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.pop(context, false);
+                },
+                child: Text('No'),
+              ),              
+            ]
+          )
+        ]
+      ),
+      
+      backgroundColor: styles["background"],
+    );    
+
+  }
+
+}
+
 
 // ----------------------------------------------------------------------------
 
@@ -851,19 +957,31 @@ class RecentTab extends Tab
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w400,
+                    color: styles["primary_text"],
                   ),
                 ),
                 GestureDetector(
-                  onTap: () {
-                    model.removeAllVideos();
+                  onTap: () async {
+                    bool unselect = await Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (A, B, C) => ModalWindow("Unselect?")
+                      )
+                    );
+                    
+                    if(unselect)
+                    {
+                      model.removeAllVideos();
+                    }
                   },
-                  child:Icon(Icons.close, size: 17.0),
+                  child:Icon(Icons.close, size: 17.0, color: styles["icon"]),
                 ),
                 Text(
                   ")",
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w400,
+                    color: styles["primary_text"],
                   ),
                 ),                
               ],
